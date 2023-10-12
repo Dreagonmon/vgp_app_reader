@@ -261,9 +261,9 @@ def make_font_bin(char_code_map: Dict[int, str], font_file: str) -> bytes():
         for i in range(len(char_code_map)):
             ch = char_code_map[i+1]
             char_data = font.get_char_data(ord(ch))
-            # # char preview
+            # char preview
             # if i < 64:
-            #     print(f"======== {ch} ========")
+            #     print(f"======== {ch} {i+1} ========")
             #     if (font.get_font_size()[0] == 8):
             #         for d in char_data:
             #             print(f"{d:08b}".replace("0", " ").replace("1", "█"))
@@ -273,7 +273,7 @@ def make_font_bin(char_code_map: Dict[int, str], font_file: str) -> bytes():
             #             print(f"{char_data[idx+1]:08b}".replace("0", " ").replace("1", "█"))
             if i % DATA_BLOCK_CHAR_COUNT == 0:
                 if i != 0:
-                    # print("未压缩字体大小:", len(data))
+                    # print("未压缩字体大小:", len(block_data))
                     total1 += len(block_data)
                     compressed = zlib.compress(block_data, level=9, wbits=9)
                     # print("压缩字体大小:", len(compressed))

@@ -61,7 +61,7 @@ LFLAGS += --strip-all
 LFLAGS += --gc-sections
 LFLAGS += --lto-O3
 # stack and memory size
-LFLAGS += -z stack-size=4096
+LFLAGS += -z stack-size=8192
 # LFLAGS += --initial-memory=65536
 # LFLAGS += --import-memory
 

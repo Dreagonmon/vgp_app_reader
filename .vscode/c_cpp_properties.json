@@ -3,7 +3,13 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/src/**"
+                "${workspaceFolder}/src/**",
+                "${workspaceFolder}/src/libc",
+                "${workspaceFolder}/src/env",
+                "${workspaceFolder}/src/gamepad",
+                "${workspaceFolder}/src/graphic",
+                "${workspaceFolder}/src/time",
+                "${workspaceFolder}/src/utils"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

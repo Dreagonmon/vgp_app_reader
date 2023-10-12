@@ -5,12 +5,11 @@
 #include <uzlib/uzlib.h>
 #include "_compressed_data.h"
 #include "bin_data.h"
+#include "compfont.h"
 
 #define READ_WINDOW_SIZE (1 << 9)
 #define READ_BUFFER_SIZE (READ_WINDOW_SIZE * 2)
 
-const uint8_t *FONT_BIN_DATA = NULL;
-uint16_t NOVAL_FONT_DSIZE = 0;
 static struct uzlib_uncomp noval_text_uncomp;
 static struct uzlib_uncomp noval_font_uncomp;
 
@@ -28,21 +27,20 @@ void bin_text_reset(void) {
 }
 
 uint8_t bin_ulibz_read1(struct uzlib_uncomp *ump) {
-    uint8_t *dest = ump->dest;
-    if (dest - ump->dest_start >= READ_BUFFER_SIZE) {
-        memmove(ump->dest_start, dest - READ_WINDOW_SIZE, READ_WINDOW_SIZE);
-        dest = ump->dest_start + READ_WINDOW_SIZE;
+    if (ump->dest - ump->dest_start >= READ_BUFFER_SIZE) {
+        memmove(ump->dest_start, ump->dest - READ_WINDOW_SIZE, READ_WINDOW_SIZE);
+        ump->dest = ump->dest_start + READ_WINDOW_SIZE;
     }
+    ump->dest_limit = ump->dest + 1;
+    uint8_t *orig_dest = ump->dest;
     int res = uzlib_uncompress(ump);
-    ump->dest_limit = dest + 1;
     if (res < 0) {
         if (ump->eof == 1) {
             return 0;
         }
         printf("Error uncompress: %d\n", res);
-        abort();
     }
-    return *dest;
+    return *(orig_dest);
 }
 
 void bin_text_skip(uint16_t len) {
@@ -63,9 +61,26 @@ uint8_t bin_text_read1(uint8_t *buffer) {
     return 1;
 }
 
-void bin_font_reset(const uint8_t *source, uint16_t len) {
+uint16_t bin_text_read(uint8_t *buffer, uint16_t len) {
+    if (buffer == NULL) {
+        return 0;
+    }
+    uint16_t init_len = len;
+    while (len > 0) {
+        uint8_t data = bin_ulibz_read1(&noval_text_uncomp);
+        if (noval_text_uncomp.eof) {
+            return init_len - len;
+        }
+        *buffer = data;
+        buffer ++;
+        len --;
+    }
+    return init_len - len;
+}
+
+void bin_font_reset(const uint8_t *source, const uint8_t *source_end) {
     noval_font_uncomp.source = source;
-    noval_font_uncomp.source_limit = source + len;
+    noval_font_uncomp.source_limit = source_end;
     uzlib_uncompress_init(&noval_font_uncomp, NULL, 0);
     noval_font_uncomp.dest = noval_font_uncomp.dest_start;
     int res = uzlib_zlib_parse_header(&noval_font_uncomp);
@@ -97,8 +112,8 @@ void init_bin_data(void) {
     const uint8_t *NOVAL_TEXT = DATA_NOVAL + 2;
     uint16_t NOVAL_TEXT_DSIZE = bin_read_uint16(DATA_NOVAL);
     // font, export for external use
-    FONT_BIN_DATA = NOVAL_TEXT + NOVAL_TEXT_DSIZE + 2;
-    NOVAL_FONT_DSIZE = bin_read_uint16(NOVAL_TEXT + NOVAL_TEXT_DSIZE);
+    const uint8_t *FONT_BIN_DATA = NOVAL_TEXT + NOVAL_TEXT_DSIZE + 2;
+    uint16_t NOVAL_FONT_DSIZE = bin_read_uint16(NOVAL_TEXT + NOVAL_TEXT_DSIZE);
     // init zlib
     uzlib_init();
     noval_text_uncomp.dest_start = malloc(READ_BUFFER_SIZE);
@@ -113,4 +128,5 @@ void init_bin_data(void) {
     noval_text_uncomp.source_limit = NOVAL_TEXT + NOVAL_TEXT_DSIZE;
     noval_text_uncomp.source_read_cb = NULL;
     bin_text_reset();
+    init_comp_font(FONT_BIN_DATA, NOVAL_FONT_DSIZE);
 }
