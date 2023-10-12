@@ -1,0 +1,4 @@
+build
+tools/*.txt
+tools/*.h
+.vscode/settings.json
