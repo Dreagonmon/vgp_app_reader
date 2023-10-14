@@ -9,6 +9,7 @@ static int32_t pressed_at[] = {
     -1,
     -1,
     -1,
+    -1,
     -1
 };
 static const uint8_t keys[] = {

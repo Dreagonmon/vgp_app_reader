@@ -6,10 +6,11 @@
 
 #include "screen.h"
 #include "framebuf.h"
-
 #include "bin_data.h"
-#include "compfont.h"
-#include "ui_utils.h"
+#include "reader.h"
+#include "gamepad.h"
+
+static ReaderContext *ctx;
 
 void init(void) {
     size_t mems = _init_memory(1);
@@ -19,32 +20,40 @@ void init(void) {
     screen_flush();
     // init data
     init_bin_data();
+    ctx = reader_init();
+    reader_render_current_page(ctx);
     puts("inited.\n");
 }
 
 WASM_EXPORT("vinit") void vinit() {
     init();
-    uint8_t *text = malloc(6);
-    bin_text_read1(text + 0);
-    bin_text_read1(text + 1);
-    bin_text_read1(text + 2);
-    bin_text_read1(text + 3);
-    bin_text_read1(text + 4);
-    text[5] = '\0';
-    ui_text_area(
-        font_comp, (const char *) text, get_frame_buffer(),
-        0, 0, get_screen_width(), get_screen_height() / 2,
-        ui_ALIGN_HCENTER | ui_ALIGN_VCENTER,
-        COLOR_SET, COLOR_CLEAR
-    );
-    ui_text_area(
-        font_comp, "123abc", get_frame_buffer(),
-        0, get_screen_height() / 2, get_screen_width(), get_screen_height() / 2,
-        ui_ALIGN_HCENTER | ui_ALIGN_VCENTER,
-        COLOR_SET, COLOR_CLEAR
-    );
+    for (int i=0; i<308; i++) {
+        reader_goto_next_page(ctx);
+    }
+    reader_render_current_page(ctx);
     screen_flush();
 }
 
 WASM_EXPORT("vloop") void vloop() {
+    uint32_t evt = gamepad_query_event();
+    if (k_action(evt) == KACT_DOWN) {
+        switch (k_value(evt))
+        {
+        case K_DOWN:
+        case K_RIGHT:
+            reader_goto_next_page(ctx);
+            reader_render_current_page(ctx);
+            screen_flush();
+            break;
+        case K_UP:
+        case K_LEFT:
+            reader_goto_last_page(ctx);
+            reader_render_current_page(ctx);
+            screen_flush();
+            break;
+        
+        default:
+            break;
+        }
+    }
 }

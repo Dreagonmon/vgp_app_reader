@@ -209,11 +209,12 @@ def encode_text(text: str) -> Tuple[Dict[int, str], bytes]:
     print("================")
     print("utf-8编码大小:", len(text.encode("utf-8")))
     print("gb18030编码大小:", len(text.encode("gb18030")))
+    print("优化编码后大小:", len(mapped))
     print("优化编码+压缩后大小:", len(compressed))
     print("压缩率: {:.2f}%".format((len(compressed) / len(text.encode("utf-8"))) * 100))
     print("全文字符个数:", len(text))
     print("不同字符个数:", len(new_char_code))
-    return new_char_code_r, bytes(compressed)
+    return new_char_code_r, len(mapped), bytes(compressed)
 
 def encode_text_substring(char_code_map: Dict[int, str], substring) -> bytes:
     new_char_code = { v: k for k, v in new_char_code.items() }
@@ -304,17 +305,21 @@ def make_font_bin(char_code_map: Dict[int, str], font_file: str) -> bytes():
 
 def make_noval_bin(text_path) -> bytes:
     """
-    data_len_n: 2 bytes
-    data: n bytes
+    data_text_block_size: 2 bytes
+    data_text_len: 2 bytes
+    data_text: n bytes
+    data_font_block_size: 2 bytes
+    data_font: n bytes
     ========
     """
     data = bytearray()
     with open(text_path, "rb") as f:
     # with open("魔法密林.txt", "rb") as f:
         text = f.read().decode("utf-8")
-    new_char_code, encoded_text = encode_text(text)
+    new_char_code, text_len, encoded_text = encode_text(text)
     font_bin = make_font_bin(new_char_code, FONT16_FILE)
-    data.extend(int.to_bytes(len(encoded_text), 2, "big")) # text data size
+    data.extend(int.to_bytes(len(encoded_text) + 2, 2, "big")) # text data size
+    data.extend(int.to_bytes(text_len, 2, "big")) # text length
     data.extend(encoded_text) # text data
     data.extend(int.to_bytes(len(font_bin), 2, "big")) # font data size
     data.extend(font_bin) # font data

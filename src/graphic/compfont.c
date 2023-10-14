@@ -1,12 +1,10 @@
 #include <stdint.h>
-#include <stdlib.h>
+#include <stddef.h>
 #include <stdio.h>
 #include "bmfont.h"
 #include "bin_data.h"
 
-bmf_BitmapFont *font_comp = NULL;
-
-bool compf_get_char_data(bmf_BitmapFont *font, uint32_t unicode, uint8_t *buffer) {
+static bool compf_get_char_data(bmf_BitmapFont *font, uint32_t unicode, uint8_t *buffer) {
     uint16_t char_count = bin_read_uint16(font->font_file->data + 97);
     if (unicode < char_count) {
         uint8_t ch_w = font->char_width;
@@ -38,21 +36,18 @@ bool compf_get_char_data(bmf_BitmapFont *font, uint32_t unicode, uint8_t *buffer
     return false;
 }
 
+static bmf_BitmapFontFile vfile_obj;
+static bmf_BitmapFont font_comp_obj = {
+    .get_char_image = compf_get_char_data,
+    .font_file = &vfile_obj,
+    .char_width = 0,
+    .char_height = 0,
+    .ascii_width = NULL,
+};
+bmf_BitmapFont *font_comp = &font_comp_obj;
+
 void init_comp_font(const uint8_t *FONT_BIN_DATA, uint16_t NOVAL_FONT_DSIZE) {
-    if (font_comp != NULL) {
-        return;
-    }
-    font_comp = malloc(sizeof(bmf_BitmapFont));
-    bmf_BitmapFontFile *vfile = malloc(sizeof(bmf_BitmapFontFile));
-    if (font_comp == NULL) {
-        puts("Failed to init font_comp");
-    }
-    if (vfile == NULL) {
-        puts("Failed to init font_comp");
-    }
-    vfile->data = (void *) FONT_BIN_DATA;
-    font_comp->get_char_image = compf_get_char_data;
-    font_comp->font_file = vfile;
+    vfile_obj.data = (void *) FONT_BIN_DATA;
     *((uint8_t *)&(font_comp->char_width)) = FONT_BIN_DATA[0];
     *((uint8_t *)&(font_comp->char_height)) = FONT_BIN_DATA[1];
     font_comp->ascii_width = FONT_BIN_DATA + 2;
