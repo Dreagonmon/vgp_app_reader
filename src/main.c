@@ -27,10 +27,6 @@ void init(void) {
 
 WASM_EXPORT("vinit") void vinit() {
     init();
-    for (int i=0; i<308; i++) {
-        reader_goto_next_page(ctx);
-    }
-    reader_render_current_page(ctx);
     screen_flush();
 }
 
@@ -41,12 +37,14 @@ WASM_EXPORT("vloop") void vloop() {
         {
         case K_DOWN:
         case K_RIGHT:
+        case K_A:
             reader_goto_next_page(ctx);
             reader_render_current_page(ctx);
             screen_flush();
             break;
         case K_UP:
         case K_LEFT:
+        case K_B:
             reader_goto_last_page(ctx);
             reader_render_current_page(ctx);
             screen_flush();

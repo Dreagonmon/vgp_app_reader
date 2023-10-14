@@ -27,3 +27,4 @@ uint8_t bmf_get_char_width(bmf_BitmapFont *font, uint32_t unicode);
 uint32_t bmf_draw_text(bmf_BitmapFont *font, const char *text, uint32_t bytes_len, gfb_FrameBuffer *frame, int16_t x, int16_t y, uint16_t width_limit, uint16_t height_limit, uint16_t color);
 uint16_t bmf_get_text_width(bmf_BitmapFont *font, const char *text, uint32_t bytes_len);
 uint32_t bmf_get_text_offset(bmf_BitmapFont *font, const char *text, uint32_t bytes_len, uint16_t width_limit, uint16_t height_limit);
+const char *bmf_get_last_char(const char *pos_before_which, const char *text_start_limit);

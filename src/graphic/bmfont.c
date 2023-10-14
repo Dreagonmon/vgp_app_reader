@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stddef.h>
 #include "bmfont.h"
 #include "framebuf.h"
 
@@ -191,4 +192,18 @@ uint32_t bmf_get_text_offset(bmf_BitmapFont *font, const char *text, uint32_t by
         place_next_char(font, state);
     }
     return state_obj.byte_offset;
+}
+
+const char *bmf_get_last_char(const char *pos_before_which, const char *text_start_limit) {
+    while (pos_before_which > text_start_limit) {
+        pos_before_which --;
+        uint8_t ch = pos_before_which[0];
+        if (ch < 0x80) {
+            // ascii
+            return pos_before_which;
+        } else if ((ch & 0b11000000) == 0b11000000) {
+            return pos_before_which;
+        }
+    }
+    return NULL;
 }
