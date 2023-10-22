@@ -6,7 +6,7 @@
 
 static bool compf_get_char_data(bmf_BitmapFont *font, uint32_t unicode, uint8_t *buffer) {
     uint16_t char_count = bin_read_uint16(font->font_file->data + 97);
-    if (unicode < char_count) {
+    if (unicode <= char_count) {
         uint8_t ch_w = font->char_width;
         uint8_t ch_h = font->char_height;
         uint8_t wp = ch_w / 8;

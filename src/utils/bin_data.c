@@ -5,7 +5,11 @@
 #include <uzlib/uzlib.h>
 #include "_compressed_data.h"
 #include "bin_data.h"
+#if FONT_COMPRESSED
 #include "compfont.h"
+#else
+#include "rawfont.h"
+#endif
 
 #define READ_WINDOW_SIZE (1 << 9)
 #define READ_BUFFER_SIZE (READ_WINDOW_SIZE * 2)
@@ -16,9 +20,11 @@ uint16_t NOVAL_TEXT_REAL_SIZE = 0;
 const uint8_t *FONT_BIN_DATA = NULL;
 uint16_t NOVAL_FONT_DSIZE = 0;
 static uint8_t noval_text_buffer[READ_BUFFER_SIZE];
-static uint8_t noval_font_buffer[READ_BUFFER_SIZE];
 static struct uzlib_uncomp noval_text_uncomp;
+#if FONT_COMPRESSED
+static uint8_t noval_font_buffer[READ_BUFFER_SIZE];
 static struct uzlib_uncomp noval_font_uncomp;
+#endif
 
 inline uint16_t bin_read_uint16(const uint8_t *p) {
     return (*p << 8) | (*(p + 1));
@@ -92,6 +98,7 @@ uint16_t bin_text_read(uint8_t *buffer, uint16_t len) {
     return init_len - len;
 }
 
+#if FONT_COMPRESSED
 void bin_font_reset(const uint8_t *source, const uint8_t *source_end) {
     noval_font_uncomp.source = source;
     noval_font_uncomp.source_limit = source_end;
@@ -120,6 +127,7 @@ uint8_t bin_font_read1(uint8_t *buffer) {
     }
     return 1;
 }
+#endif
 
 void init_bin_data(void) {
     // text
@@ -135,10 +143,14 @@ void init_bin_data(void) {
     if (noval_text_uncomp.dest_start == NULL) {
         puts("Failed to init uncomp buffer\n");
     }
+    bin_text_reset();
+    #if FONT_COMPRESSED
     noval_font_uncomp.dest_start = noval_font_buffer;
     if (noval_font_uncomp.dest_start == NULL) {
         puts("Failed to init uncomp buffer\n");
     }
-    bin_text_reset();
     init_comp_font(FONT_BIN_DATA, NOVAL_FONT_DSIZE);
+    #else
+    init_raw_font(FONT_BIN_DATA, NOVAL_FONT_DSIZE);
+    #endif
 }

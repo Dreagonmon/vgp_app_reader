@@ -4,9 +4,13 @@
 #include "reader.h"
 #include "bin_data.h"
 #include "screen.h"
+#if FONT_COMPRESSED
 #include "compfont.h"
+#else
+#include "rawfont.h"
+#endif
 
-#define BUFFER_WINDOW_SIZE 256
+#define BUFFER_WINDOW_SIZE 1024
 #define BUFFER_SIZE (BUFFER_WINDOW_SIZE * 4)
 #define MAX_LINES 16
 #define MIN(x,y) ( x > y ? y : x)
@@ -38,7 +42,11 @@ ReaderContext *reader_init(void) {
     _ctx.buffer_current = 0;
     _ctx.buffer_page_end = 0;
     _ctx.frame = get_frame_buffer();
+    #if FONT_COMPRESSED
     _ctx.font = font_comp;
+    #else
+    _ctx.font = font_raw;
+    #endif
     // init buffer
     _ctx.seek(0);
     uint32_t read_count = _ctx.read(_ctx.text_buffer, BUFFER_SIZE);

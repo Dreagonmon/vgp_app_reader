@@ -1,6 +1,8 @@
 #pragma once
 #include <stdint.h>
 
+#define FONT_COMPRESSED 0
+
 uint16_t bin_read_uint16(const uint8_t *p);
 void init_bin_data(void);
 uint16_t bin_get_text_length(void);

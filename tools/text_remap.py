@@ -223,7 +223,7 @@ def encode_text_substring(char_code_map: Dict[int, str], substring) -> bytes:
         mapped.extend(UTF8.to_bytes(new_char_code[ch]))
     return bytes(mapped)
 
-def make_font_bin(char_code_map: Dict[int, str], font_file: str) -> bytes():
+def make_font_bin(char_code_map: Dict[int, str], font_file: str, compress_data=True) -> bytes():
     """
     font_width: 1 byte
     font_height: 1 byte
@@ -254,53 +254,64 @@ def make_font_bin(char_code_map: Dict[int, str], font_file: str) -> bytes():
         data.extend(int.to_bytes(len(char_code_map), 2, "big")) # char count
         data.append(0) # reserve
         # generate font data
-        blocks = dict()
-        block_data = bytearray()
-        block_id = 0
-        total1 = 0
-        total2 = 0
-        for i in range(len(char_code_map)):
-            ch = char_code_map[i+1]
-            char_data = font.get_char_data(ord(ch))
-            # char preview
-            # if i < 64:
-            #     print(f"======== {ch} {i+1} ========")
-            #     if (font.get_font_size()[0] == 8):
-            #         for d in char_data:
-            #             print(f"{d:08b}".replace("0", " ").replace("1", "█"))
-            #     elif (font.get_font_size()[0] == 16):
-            #         for idx in range(0, 32, 2):
-            #             print(f"{char_data[idx]:08b}".replace("0", " ").replace("1", "█"), end="")
-            #             print(f"{char_data[idx+1]:08b}".replace("0", " ").replace("1", "█"))
-            if i % DATA_BLOCK_CHAR_COUNT == 0:
-                if i != 0:
-                    # print("未压缩字体大小:", len(block_data))
-                    total1 += len(block_data)
-                    compressed = zlib.compress(block_data, level=9, wbits=9)
-                    # print("压缩字体大小:", len(compressed))
-                    total2 += len(compressed)
-                    blocks[block_id] = (total2, compressed)
-                    block_data.clear()
-                    block_id += 1
-            block_data.extend(char_data)
-        # last block
-        total1 += len(block_data)
-        compressed = zlib.compress(block_data, level=9, wbits=9)
-        total2 += len(compressed)
-        blocks[block_id] = (total2, compressed)
-        # make bin
-        block_count = (len(char_code_map) // DATA_BLOCK_CHAR_COUNT) + 1
-        for i in range(block_count):
-            offset = blocks[i][0]
-            assert offset < 0xFFFF
-            data.extend(int.to_bytes(offset, 2, "big")) # block size
-        for i in range(block_count):
-            char_data = blocks[i][1]
-            data.extend(char_data) # char data
-        final_size = len(data)
-        print("================")
-        print("字库 压缩/未压缩:", final_size, "/", total1)
-        print("压缩率: {:.2f}%".format((final_size / total1) * 100))
+        if compress_data:
+            # compressed data
+            blocks = dict()
+            block_data = bytearray()
+            block_id = 0
+            total1 = 0
+            total2 = 0
+            for i in range(len(char_code_map)):
+                ch = char_code_map[i+1]
+                char_data = font.get_char_data(ord(ch))
+                # char preview
+                # if i < 64:
+                #     print(f"======== {ch} {i+1} ========")
+                #     if (font.get_font_size()[0] == 8):
+                #         for d in char_data:
+                #             print(f"{d:08b}".replace("0", " ").replace("1", "█"))
+                #     elif (font.get_font_size()[0] == 16):
+                #         for idx in range(0, 32, 2):
+                #             print(f"{char_data[idx]:08b}".replace("0", " ").replace("1", "█"), end="")
+                #             print(f"{char_data[idx+1]:08b}".replace("0", " ").replace("1", "█"))
+                if i % DATA_BLOCK_CHAR_COUNT == 0:
+                    if i != 0:
+                        # print("未压缩字体大小:", len(block_data))
+                        total1 += len(block_data)
+                        compressed = zlib.compress(block_data, level=9, wbits=9)
+                        # print("压缩字体大小:", len(compressed))
+                        total2 += len(compressed)
+                        blocks[block_id] = (total2, compressed)
+                        block_data.clear()
+                        block_id += 1
+                block_data.extend(char_data)
+            # last block
+            total1 += len(block_data)
+            compressed = zlib.compress(block_data, level=9, wbits=9)
+            total2 += len(compressed)
+            blocks[block_id] = (total2, compressed)
+            # make bin
+            block_count = (len(char_code_map) // DATA_BLOCK_CHAR_COUNT) + 1
+            for i in range(block_count):
+                offset = blocks[i][0]
+                assert offset < 0xFFFF
+                data.extend(int.to_bytes(offset, 2, "big")) # block size
+            for i in range(block_count):
+                char_data = blocks[i][1]
+                data.extend(char_data) # char data
+            final_size = len(data)
+            print("================")
+            print("字库 压缩/未压缩:", final_size, "/", total1)
+            print("压缩率: {:.2f}%".format((final_size / total1) * 100))
+        else:
+            for i in range(len(char_code_map)):
+                ch = char_code_map[i+1]
+                char_data = font.get_char_data(ord(ch))
+                data.extend(char_data)
+            final_size = len(data)
+            print("================")
+            print("字体数据大小:", final_size)
+            # raw data
         return bytes(data)
 
 def make_noval_bin(text_path) -> bytes:
@@ -317,7 +328,7 @@ def make_noval_bin(text_path) -> bytes:
     # with open("魔法密林.txt", "rb") as f:
         text = f.read().decode("utf-8")
     new_char_code, text_len, encoded_text = encode_text(text)
-    font_bin = make_font_bin(new_char_code, FONT16_FILE)
+    font_bin = make_font_bin(new_char_code, FONT16_FILE, False)
     data.extend(int.to_bytes(len(encoded_text) + 2, 2, "big")) # text data size
     data.extend(int.to_bytes(text_len, 2, "big")) # text length
     data.extend(encoded_text) # text data
