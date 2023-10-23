@@ -36,10 +36,10 @@ CFLAGS += -fdata-sections
 CFLAGS += -flto
 CFLAGS += -foptimize-sibling-calls
 # wasm3 support features
-CFLAGS += -mmutable-globals
-CFLAGS += -mnontrapping-fptoint
-CFLAGS += -msign-ext
-CFLAGS += -mmultivalue
+# CFLAGS += -mmutable-globals
+# CFLAGS += -mnontrapping-fptoint
+# CFLAGS += -msign-ext
+# CFLAGS += -mmultivalue
 CFLAGS += -mbulk-memory
 # opt
 ifdef DEBUG
