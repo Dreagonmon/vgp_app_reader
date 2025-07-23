@@ -191,6 +191,16 @@ def encode_text(text: str) -> Tuple[Dict[int, str], bytes]:
         mapped.extend(UTF8.to_bytes(new_char_code[ch]))
     new_char_code_r = { v: k for k, v in new_char_code.items() }
     compressed = zlib.compress(mapped, level=9, wbits=9)
+    # data_count = 0
+    # compressed = bytearray()
+    # indexes = bytearray()
+    # while data_count < len(mapped):
+    #     data_block = mapped[data_count:data_count + 512]
+    #     data_count += len(data_block)
+    #     compressed_block = zlib.compress(data_block, level=9, wbits=9)
+    #     compressed.extend(compressed_block)
+    #     indexes.extend(int.to_bytes(len(compressed), 2, "big"))
+    # compressed = indexes + compressed
     # # preview text
     # print("================")
     # pos = 0
